@@ -5,30 +5,9 @@ import got from 'got';
 import { getModuleInfo } from './packageUtils';
 import { getRepositoryInfo } from './repositoryUtils';
 
-const COMMON_CHANGELOG_FILES = ['CHANGELOG.md', 'History.md', 'CHANGES.md', 'CHANGELOG'];
+const COMMON_CHANGELOG_FILES = [ 'CHANGELOG.md', 'History.md', 'CHANGES.md', 'CHANGELOG' ];
 
-export const fetchRemoteDb = _.memoize(async url => {
-    try {
-        const response = await got(url, { json: true });
-
-        return response.body;
-    } catch (err) {
-        return null;
-    }
-});
-
-export async function findModuleChangelogUrl(moduleName, remoteChangelogUrlsDbUrl) {
-    let changelogUrls;
-
-    if (remoteChangelogUrlsDbUrl) {
-        changelogUrls = await fetchRemoteDb(remoteChangelogUrlsDbUrl);
-    }
-
-    changelogUrls = changelogUrls || require('../db/changelogUrls.json');
-
-    if (changelogUrls[moduleName]) {
-        return changelogUrls[moduleName];
-    }
+export async function findModuleChangelogUrl(moduleName) {
 
     const { changelog, repository } = await getModuleInfo(moduleName);
 

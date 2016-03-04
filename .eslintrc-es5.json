@@ -4,7 +4,7 @@
         "node": true
     },
     "rules": {
-        "array-bracket-spacing": [2, "never"],
+        "array-bracket-spacing": [2, "always"],
         "brace-style": [2, "1tbs", { "allowSingleLine": true }],
         "camelcase": [2, { "properties": "never" }],
         "comma-dangle": [2, "never"],
