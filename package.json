@@ -25,7 +25,8 @@
     "lodash": "3.10.1",
     "ora": "0.2.1",
     "package-info": "2.2.3",
-    "yargs": "4.4.0"
+    "yargs": "4.4.0",
+    "watch": "0.17.1"
   },
   "devDependencies": {
     "babel-core": "5.8.33",
