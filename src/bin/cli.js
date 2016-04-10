@@ -7,10 +7,13 @@ import chalk from 'chalk';
 import packageInfo from 'package-info';
 import ora from 'ora';
 import _ from 'lodash';
+import fs from 'fs';
+import json2xls from 'json2xls';
 
 const argv = require('yargs').argv;
 
 const format = argv.format === 'xls' ? 'xls' : 'json';
+const reportFileName = argv.reportFileName ? argv.reportFileName : 'deps-info-report';
 
 import { callAsync } from '../utils';
 import getPackages from '../getPackages';
@@ -72,7 +75,7 @@ function loadConfig() {
     const dictionary = getPackages(files);
     const deps = _.values(dictionary);
 
-    const results = [];
+    let results = [];
     const errors = [];
 
     const spinner = ora('Fetching info...');
@@ -93,15 +96,44 @@ function loadConfig() {
         }
     }
 
+    results = results.map((result) => {
+        if (_.isArray(result.version)) {
+            result.version = _.uniq(result.version);
+            if (result.version.length === 1) {
+                result.version = result.version[0];
+            }
+        }
+        if (_.isArray(result.group)) {
+            result.group = _.uniq(result.group);
+            if (result.group.length === 1) {
+                result.group = result.group[0];
+            }
+        }
+        return result;
+    });
+
+    results = _.sortBy(results, 'name');
+
     spinner.stop();
 
     switch(format) {
         case 'xls':
             console.log('Saving report to XSL file...');
+            await callAsync(
+                fs.writeFile,
+                path.resolve(`./${reportFileName}.xls`),
+                json2xls(results),
+                'binary'
+            );
             break;
         case 'json':
         default:
             console.log('Saving report to JSON file...');
+            await callAsync(
+                fs.writeFile,
+                path.resolve(`./${reportFileName}.json`),
+                JSON.stringify(results, null, 4)
+            );
             break;
     }
 
