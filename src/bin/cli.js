@@ -1,18 +1,28 @@
 #! /usr/bin/env node
 
-import { resolve } from 'path';
+/* eslint-disable */
+
+import path from 'path';
+import chalk from 'chalk';
 import _ from 'lodash';
+import packageInfo from 'package-info';
+import ora from 'ora';
 
-import { DEPS_GROUPS, getModuleInfo } from '../packageUtils';
+const argv = require('yargs').argv;
 
-(function main() {
+const format = argv.format === 'xls' ? 'xls' : 'json';
+
+import { DEPS_GROUPS, callAsync } from '../utils';
+
+(async function main() {
+
     // Loading `package.json` from the current directory
-    const packageFile = resolve('./package.json');
+    const packageFile = path.resolve('./package.json');
     let packageJson;
     try {
         packageJson = require(packageFile);
     } catch (err) {
-        console.error(`Error loading package.json: ${err.message}`);
+        console.error(chalk.red(`Error loading package.json: ${err.message}`));
         process.exit(1);
     }
 
@@ -38,10 +48,41 @@ import { DEPS_GROUPS, getModuleInfo } from '../packageUtils';
                 });
             });
 
-    deps = _.map(_.union(...deps), function* (dependency) {
-        console.log(yield getModuleInfo(dependency.name));
-        return dependency;
-    });
+    deps = _.union(...deps);
 
-//    console.log(deps);
+    const results = [];
+    const errors = [];
+
+    const spinner = ora('Fetching info...');
+    spinner.start();
+
+    for (let i = 0; i < deps.length; i++) {
+        try {
+            spinner.text = `Fetching information about ${chalk.blue(deps[i].name)}`;
+            const info = await callAsync(packageInfo, deps[i].name);
+            results.push({
+                ...deps[i],
+                license: info.license,
+                description: info.description,
+                homepage: info.homepage
+            });
+        } catch (error) {
+            errors.push(deps[i]);
+        }
+    }
+
+    spinner.stop();
+
+    switch(format) {
+        case 'xls':
+            console.log('Saving report to XSL file...');
+            break;
+        case 'json':
+        default:
+            console.log('Saving report to JSON file...');
+            break;
+    }
+
+    console.log(chalk.green(`Done! Packages: ${results.length}. Errors: ${errors.length}`));
+
 })();
